@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Passwort-Generator</title>
+
+	<style>
+
+		*, *::before, *::after {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		:root {
+			--bg: #1a1d23;
+			--surface: #22262e;
+			--surface-2: #2a2f39;
+			--border: #333844;
+			--accent: #d4a55a;
+			--accent-dim: rgba( 212, 165, 90, 0.15 );
+			--green: #6abf69;
+			--red: #e06c6c;
+			--text: #e8eaf0;
+			--text-dim: #8a909e;
+			--radius: 10px;
+		}
+
+		body {
+			background: var( --bg );
+			color: var( --text );
+			font-family: 'DM Sans', system-ui, sans-serif;
+			min-height: 100vh;
+			padding: 32px 16px 64px;
+		}
+
+		h1 {
+			font-family: 'DM Serif Display', Georgia, serif;
+			font-size: 2rem;
+			font-weight: 400;
+			color: var( --accent );
+			text-align: center;
+			margin-bottom: 8px;
+		}
+
+		.subtitle {
+			text-align: center;
+			color: var( --text-dim );
+			font-size: 0.9rem;
+			margin-bottom: 32px;
+		}
+
+		/* Card */
+
+		.card {
+			max-width: 720px;
+			margin: 0 auto;
+			background: var( --surface );
+			border: 1px solid var( --border );
+			border-radius: var( --radius );
+			padding: 24px;
+		}
+
+		/* Password Output */
+
+		.pw-output {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			background: var( --surface-2 );
+			border: 1px solid var( --border );
+			border-radius: 6px;
+			padding: 14px 16px;
+			cursor: pointer;
+			transition: border-color 0.2s;
+		}
+
+		.pw-output:hover {
+			border-color: var( --accent );
+		}
+
+		.pw-output__text {
+			flex: 1;
+			min-width: 0;
+			font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+			font-size: 1.25rem;
+			letter-spacing: 0.04em;
+			color: var( --text );
+			word-break: break-all;
+			user-select: all;
+		}
+
+		/* Strength */
+
+		.strength {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			margin: 16px 0 24px;
+		}
+
+		.strength-bar {
+			flex: 1;
+			height: 6px;
+			background: var( --border );
+			border-radius: 3px;
+			overflow: hidden;
+		}
+
+		.strength-bar__fill {
+			height: 100%;
+			width: 0%;
+			border-radius: 3px;
+			background: var( --accent );
+			transition: width 0.25s, background 0.25s;
+		}
+
+		.strength-label {
+			font-size: 0.78rem;
+			font-weight: 700;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: var( --text-dim );
+			min-width: 64px;
+			text-align: right;
+		}
+
+		/* Length Control */
+
+		.length-control {
+			display: flex;
+			align-items: center;
+			gap: 16px;
+			margin-bottom: 20px;
+		}
+
+		.length-label {
+			font-size: 0.85rem;
+			color: var( --text-dim );
+			white-space: nowrap;
+		}
+
+		.length-value {
+			font-size: 1rem;
+			font-weight: 700;
+			color: var( --accent );
+			min-width: 28px;
+			text-align: right;
+		}
+
+		input[type="range"] {
+			flex: 1;
+			min-width: 120px;
+			-webkit-appearance: none;
+			appearance: none;
+			height: 4px;
+			border-radius: 2px;
+			background: var( --border );
+			outline: none;
+			cursor: pointer;
+		}
+
+		input[type="range"]::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 18px;
+			height: 18px;
+			border-radius: 50%;
+			background: var( --accent );
+			cursor: pointer;
+		}
+
+		input[type="range"]::-moz-range-thumb {
+			width: 18px;
+			height: 18px;
+			border-radius: 50%;
+			background: var( --accent );
+			border: none;
+			cursor: pointer;
+		}
+
+		/* Option Grid */
+
+		.option-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 12px;
+			margin-bottom: 24px;
+		}
+
+		.option {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			background: var( --surface-2 );
+			border: 1px solid var( --border );
+			border-radius: 6px;
+			padding: 14px 16px;
+		}
+
+		.option__info {
+			min-width: 0;
+		}
+
+		.option__name {
+			font-size: 0.9rem;
+			font-weight: 600;
+			color: var( --text );
+		}
+
+		.option__hint {
+			font-size: 0.8rem;
+			color: var( --text-dim );
+			font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+		}
+
+		/* Toggle Switch */
+
+		.toggle {
+			flex-shrink: 0;
+			position: relative;
+			width: 42px;
+			height: 24px;
+			border-radius: 12px;
+			border: none;
+			background: var( --border );
+			cursor: pointer;
+			padding: 0;
+			transition: background 0.2s;
+		}
+
+		.toggle::after {
+			content: '';
+			position: absolute;
+			top: 3px;
+			left: 3px;
+			width: 18px;
+			height: 18px;
+			border-radius: 50%;
+			background: #e8eaf0;
+			transition: transform 0.2s;
+		}
+
+		.toggle[aria-checked="true"] {
+			background: var( --accent );
+		}
+
+		.toggle[aria-checked="true"]::after {
+			transform: translateX( 18px );
+		}
+
+		/* Buttons */
+
+		.btn {
+			padding: 8px 18px;
+			border-radius: 6px;
+			border: none;
+			font-family: inherit;
+			font-size: 0.85rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: opacity 0.15s;
+		}
+
+		.btn--accent {
+			background: var( --accent );
+			color: #1a1d23;
+		}
+
+		.btn--ghost {
+			background: var( --surface-2 );
+			color: var( --text-dim );
+			border: 1px solid var( --border );
+		}
+
+		.btn:hover {
+			opacity: 0.85;
+		}
+
+		.btn--block {
+			width: 100%;
+			padding: 14px;
+			font-size: 0.95rem;
+		}
+
+		.btn.is-copied {
+			color: var( --green );
+			border-color: var( --green );
+			opacity: 1;
+		}
+
+		/* Responsive */
+
+		@media ( max-width: 480px ) {
+
+			.option-grid {
+				grid-template-columns: 1fr;
+			}
+
+		}
+
+		/* Google Fonts */
+
+		@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;600;700&display=swap');
+
+	</style>
+
+</head>
+<body>
+
+	<h1>Passwort-Generator</h1>
+	<p class="subtitle">Sichere Passwörter — lokal im Browser, kein Server</p>
+
+	<div class="card">
+
+		<div class="pw-output" id="pwOutput" role="button" tabindex="0" aria-label="Passwort — klicken zum Kopieren">
+			<span class="pw-output__text" id="pwText"></span>
+			<button class="btn btn--ghost" id="copyBtn" aria-label="Passwort kopieren">Kopieren</button>
+		</div><!-- end /.pw-output -->
+
+		<div class="strength">
+			<div class="strength-bar"><div class="strength-bar__fill" id="strengthFill"></div></div>
+			<span class="strength-label" id="strengthLabel" aria-live="polite"></span>
+		</div><!-- end /.strength -->
+
+		<div class="length-control">
+			<span class="length-label">Länge</span>
+			<input type="range" id="lengthSlider" min="4" max="64" value="16" aria-label="Passwortlänge">
+			<span class="length-value" id="lengthValue">16</span>
+		</div><!-- end /.length-control -->
+
+		<div class="option-grid">
+
+			<div class="option">
+				<button class="toggle" role="switch" aria-checked="true" data-pool="lower" aria-label="Kleinbuchstaben"></button>
+				<div class="option__info">
+					<div class="option__name">Kleinbuchstaben</div>
+					<div class="option__hint">a–z</div>
+				</div>
+			</div><!-- end /.option -->
+
+			<div class="option">
+				<button class="toggle" role="switch" aria-checked="true" data-pool="upper" aria-label="Großbuchstaben"></button>
+				<div class="option__info">
+					<div class="option__name">Großbuchstaben</div>
+					<div class="option__hint">A–Z</div>
+				</div>
+			</div><!-- end /.option -->
+
+			<div class="option">
+				<button class="toggle" role="switch" aria-checked="true" data-pool="digits" aria-label="Zahlen"></button>
+				<div class="option__info">
+					<div class="option__name">Zahlen</div>
+					<div class="option__hint">0–9</div>
+				</div>
+			</div><!-- end /.option -->
+
+			<div class="option">
+				<button class="toggle" role="switch" aria-checked="true" data-pool="symbols" aria-label="Sonderzeichen"></button>
+				<div class="option__info">
+					<div class="option__name">Sonderzeichen</div>
+					<div class="option__hint">!@#$%&*</div>
+				</div>
+			</div><!-- end /.option -->
+
+		</div><!-- end /.option-grid -->
+
+		<button class="btn btn--accent btn--block" id="generateBtn">Neues Passwort generieren</button>
+
+	</div><!-- end /.card -->
+
+	<script>
+
+		(function() {
+
+			'use strict';
+
+			const POOLS = {
+				lower: 'abcdefghijklmnopqrstuvwxyz',
+				upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+				digits: '0123456789',
+				symbols: '!@#$%^&*()-_=+'
+			};
+
+			const pwText = document.getElementById( 'pwText' );
+			const pwOutput = document.getElementById( 'pwOutput' );
+			const copyBtn = document.getElementById( 'copyBtn' );
+			const strengthFill = document.getElementById( 'strengthFill' );
+			const strengthLabel = document.getElementById( 'strengthLabel' );
+			const lengthSlider = document.getElementById( 'lengthSlider' );
+			const lengthValue = document.getElementById( 'lengthValue' );
+			const generateBtn = document.getElementById( 'generateBtn' );
+			const toggles = Array.from( document.querySelectorAll( '.toggle' ) );
+
+			// Cryptographically secure random integer in [0, max)
+
+			function randomInt( max ) {
+				const arr = new Uint32Array( 1 );
+				const limit = Math.floor( 0xffffffff / max ) * max; // reject to avoid modulo bias
+				let val;
+
+				do {
+					crypto.getRandomValues( arr );
+					val = arr[0];
+				} while ( val >= limit );
+
+				return val % max;
+			}
+
+			// Fisher–Yates shuffle with secure randomness
+
+			function shuffle( arr ) {
+				for ( let i = arr.length - 1; i > 0; i-- ) {
+					const j = randomInt( i + 1 );
+					[ arr[i], arr[j] ] = [ arr[j], arr[i] ];
+				}
+
+				return arr;
+			}
+
+			function activePools() {
+				return toggles
+					.filter( t => t.getAttribute( 'aria-checked' ) === 'true' )
+					.map( t => t.dataset.pool );
+			}
+
+			function generate() {
+
+				const length = parseInt( lengthSlider.value, 10 );
+				const pools = activePools();
+
+				if ( ! pools.length ) return;
+
+				const combined = pools.map( p => POOLS[p] ).join( '' );
+				const chars = [];
+
+				// Guarantee at least one char from each active pool
+				pools.forEach( p => {
+					const pool = POOLS[p];
+					chars.push( pool[ randomInt( pool.length ) ] );
+				});
+
+				// Fill remaining length from the combined pool
+				while ( chars.length < length ) {
+					chars.push( combined[ randomInt( combined.length ) ] );
+				}
+
+				pwText.textContent = shuffle( chars ).join( '' );
+
+				updateStrength( length, combined.length );
+
+			}
+
+			function updateStrength( length, poolSize ) {
+
+				const bits = length * Math.log2( poolSize );
+				const pct = Math.min( bits / 80, 1 ) * 100;
+
+				let label, color;
+
+				if ( bits < 40 ) {
+					label = 'Schwach';
+					color = 'var( --red )';
+				} else if ( bits <= 70 ) {
+					label = 'Mittel';
+					color = 'var( --accent )';
+				} else {
+					label = 'Stark';
+					color = 'var( --green )';
+				}
+
+				strengthFill.style.width = pct + '%';
+				strengthFill.style.background = color;
+				strengthLabel.textContent = label;
+				strengthLabel.style.color = color;
+
+			}
+
+			function copyPassword() {
+
+				const text = pwText.textContent;
+
+				const onCopied = () => {
+					copyBtn.textContent = 'Kopiert!';
+					copyBtn.classList.add( 'is-copied' );
+
+					setTimeout( () => {
+						copyBtn.textContent = 'Kopieren';
+						copyBtn.classList.remove( 'is-copied' );
+					}, 1500 );
+				};
+
+				if ( navigator.clipboard && navigator.clipboard.writeText ) {
+					navigator.clipboard.writeText( text ).then( onCopied ).catch( fallbackCopy );
+				} else {
+					fallbackCopy();
+				}
+
+				function fallbackCopy() {
+					const ta = document.createElement( 'textarea' );
+					ta.value = text;
+					ta.style.position = 'fixed';
+					ta.style.opacity = '0';
+					document.body.appendChild( ta );
+					ta.select();
+					document.execCommand( 'copy' );
+					document.body.removeChild( ta );
+					onCopied();
+				}
+
+			}
+
+			// Length slider
+
+			lengthSlider.addEventListener( 'input', () => {
+				lengthValue.textContent = lengthSlider.value;
+				generate();
+			});
+
+			// Toggles — keep at least one active
+
+			toggles.forEach( toggle => {
+				toggle.addEventListener( 'click', () => {
+
+					const isOn = toggle.getAttribute( 'aria-checked' ) === 'true';
+
+					// Prevent disabling the last active pool
+					if ( isOn && activePools().length === 1 ) return;
+
+					toggle.setAttribute( 'aria-checked', isOn ? 'false' : 'true' );
+					generate();
+
+				});
+			});
+
+			// Generate button
+
+			generateBtn.addEventListener( 'click', generate );
+
+			// Copy — button and click on the output field
+
+			copyBtn.addEventListener( 'click', ( e ) => {
+				e.stopPropagation();
+				copyPassword();
+			});
+
+			pwOutput.addEventListener( 'click', copyPassword );
+
+			pwOutput.addEventListener( 'keydown', ( e ) => {
+				if ( e.key === 'Enter' || e.key === ' ' ) {
+					e.preventDefault();
+					copyPassword();
+				}
+			});
+
+			// Initial password
+
+			generate();
+
+		})();
+
+	</script>
+
+</body>
+</html>
